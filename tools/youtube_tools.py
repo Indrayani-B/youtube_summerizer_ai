@@ -1,3 +1,5 @@
+# tools/youtube_tools.py
+
 import re
 import subprocess
 import os
@@ -52,6 +54,7 @@ class YouTubeTools:
                     '--sub-lang', 'en,en-US,en-GB',  # Try multiple English variants
                     '--sub-format', 'vtt',
                     '--skip-download',  # Don't download video
+                    '--no-playlist',
                     '--quiet',
                     '--no-warnings',
                     '-o', f'{temp_dir}/%(id)s.%(ext)s',
@@ -59,9 +62,13 @@ class YouTubeTools:
                 ]
                 
                 # Run yt-dlp
-                result = subprocess.run(cmd, capture_output=True, text=True)
+                try:
+                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                except subprocess.TimeoutExpired:
+                    print("⚠️ yt-dlp timed out on manual-subs attempt")
+                    result = None
                 
-                if result.returncode != 0:
+                if result is not None and result.returncode != 0:
                     print(f"⚠️ yt-dlp warning: {result.stderr}")
                 
                 # Look for subtitle files
@@ -76,12 +83,16 @@ class YouTubeTools:
                         '--sub-lang', 'en',
                         '--sub-format', 'vtt',
                         '--skip-download',
+                        '--no-playlist', 
                         '--quiet',
                         '-o', f'{temp_dir}/%(id)s.%(ext)s',
                         video_url
                     ]
                     
-                    result = subprocess.run(cmd_auto, capture_output=True, text=True)
+                    try:
+                        result = subprocess.run(cmd_auto, capture_output=True, text=True, timeout=30)
+                    except subprocess.TimeoutExpired:
+                        return {"error": "yt-dlp timed out — video may be too long or network is slow"}
                     files = os.listdir(temp_dir)
                     vtt_files = [f for f in files if f.endswith('.vtt')]
                 

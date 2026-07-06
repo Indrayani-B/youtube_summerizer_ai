@@ -138,7 +138,7 @@ if process_btn and url:
                 st.session_state.error_details = result.get("error")
             else:
                 st.session_state.result = result
-                st.success("✅ Video processed successfully!")
+                #st.success("✅ Video processed successfully!")
                 
         except Exception as e:
             error_msg = str(e)
